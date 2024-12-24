@@ -2,7 +2,7 @@
 
 This is a Project to help you compile and run Yara as soon as possible.
 
-## How to build
+## How to build image
 
 ```bash
 docker build -f Dockerfile.build -t yara-builder .
@@ -11,7 +11,7 @@ docker build -f Dockerfile.run --build-arg YARA_VERSION=4.5.2 -t yara-run .
 
 ## How to run
 
-### Dockerfile.compile
+### Dockerfile.build
 
 ```bash
 unzip yara-4.5.2.zip
