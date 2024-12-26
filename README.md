@@ -7,7 +7,7 @@ This is a Project to help you compile and run Yara as soon as possible.
 ```bash
 docker build -f Dockerfile.build -t yara-builder .
 docker build -f Dockerfile.run --build-arg YARA_VERSION=4.5.2 -t yara-run .
-docker build -f Dockerfile.dev -t yara-dev .
+docker build -f Dockerfile.godev -t yara-dev .
 
 Optional build arg for Dockerfile.dev:
 - Set YARA version as build argument
