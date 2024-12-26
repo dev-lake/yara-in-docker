@@ -1,5 +1,5 @@
 # Use an official Ubuntu base image
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 # Set YARA version as build argument
 ARG YARA_VERSION=4.5.2
