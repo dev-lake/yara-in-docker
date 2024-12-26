@@ -1,0 +1,98 @@
+# Use an official Ubuntu base image
+FROM ubuntu:18.04
+
+# Set YARA version as build argument
+ARG YARA_VERSION=4.5.2
+# Set Go version as build argument
+ARG GO_VERSION=1.23.4
+# Set the Go architecture
+ARG GO_ARCH=linux-arm64
+
+# Set environment variables to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install necessary dependencies including Jansson, OpenSSL, and Git
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    automake \
+    libtool \
+    pkg-config \
+    wget \
+    unzip \
+    python3 \
+    python3-pip \
+    python3-setuptools \
+    libjansson-dev \
+    libmagic-dev \
+    libssl-dev \
+    libcap-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install Go from the official website
+RUN wget https://go.dev/dl/go${GO_VERSION}.${GO_ARCH}.tar.gz && \
+    tar -C /usr/local -xzf go${GO_VERSION}.${GO_ARCH}.tar.gz && \
+    rm go${GO_VERSION}.${GO_ARCH}.tar.gz
+
+# Set Go environment variables
+ENV PATH="/usr/local/go/bin:$PATH"
+ENV GOPATH=/go
+ENV PATH=$GOPATH/bin:$PATH
+
+# Install bzip2 from the source
+WORKDIR /opt
+
+# Copy bzip2 source tar.gz file to the container
+COPY bzip2-1.0.9.tar.gz /opt/
+
+# Unzip and navigate to the bzip2 source directory
+RUN tar -xzvf bzip2-1.0.9.tar.gz && \
+    rm bzip2-1.0.9.tar.gz && \
+    cd bzip2-1.0.9 && \
+    ./configure && \
+    # Modify the Makefile to add -fPIC to CFLAGS
+    sed -i 's/CFLAGS    =    -g -O2 $(BIGFILES)/CFLAGS    =    -g -O2 $(BIGFILES) -fPIC/' Makefile && \
+    # Compile and install bzip2
+    make && \
+    make install
+
+# Install xz from the source
+WORKDIR /opt
+
+# Copy xz source tar.gz file to the container
+COPY xz-5.4.1.tar.gz /opt/
+
+# Unzip and navigate to the xz source directory
+RUN tar -xzvf xz-5.4.1.tar.gz && \
+    rm xz-5.4.1.tar.gz && \
+    cd xz-5.4.1 && \
+    # Compile and install xz
+    ./configure --enable-static --disable-shared && \
+    make && \
+    make install
+
+# Install YARA (compile and install)
+WORKDIR /opt
+
+# Copy the YARA source zip file to the container
+COPY yara-${YARA_VERSION}.zip /opt/
+
+# Unzip the YARA source code
+RUN unzip yara-${YARA_VERSION}.zip && \
+    rm yara-${YARA_VERSION}.zip
+
+# Navigate to the YARA source directory
+WORKDIR /opt/yara-${YARA_VERSION}
+
+# Compile and install YARA with desired modules
+RUN ./bootstrap.sh && \
+    ./configure --enable-cuckoo --enable-magic --enable-dotnet --enable-hash --enable-PE && \
+    make && \
+    make install && \
+    ldconfig
+
+# Set up the working directory for Go project (go-yara development)
+WORKDIR /workspace
+
+# Set ENTRYPOINT to use Bash as the default shell
+ENTRYPOINT ["bash"]
